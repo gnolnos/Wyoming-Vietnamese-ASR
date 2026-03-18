@@ -1,0 +1,45 @@
+services:
+
+  wyoming-vietnamese-asr:
+    image: mkbyme/wyoming-vietnamese-asr:1.0.9
+    container_name: wyoming-vietnamese-asr
+    user: "root"
+    ports:
+      - "10400:10400"
+    environment:
+      MODE: "wyoming"           # ← default, có thể bỏ
+      HF_MODEL_ID: "hynt/Zipformer-30M-RNNT-6000h"
+      HF_TOKEN: ""
+      FORCE_DOWNLOAD: "false"
+      USE_INT8: "false"
+      TOKENS_FILE: "config.json"
+      NUM_THREADS: "4"
+      PROVIDER: "cpu"
+      LOG_LEVEL: "INFO"
+    volumes:
+      - ./model:/app/model
+    restart: unless-stopped
+
+  wyoming-fastapi:
+    image: mkbyme/wyoming-vietnamese-asr:1.0.9
+    container_name: wyoming-fastapi
+    user: "root"
+    ports:
+      - "8090:8090"
+    environment:
+      MODE: "fastapi"           # ← switch sang FastAPI
+      HF_MODEL_ID: "hynt/Zipformer-30M-RNNT-6000h"
+      HF_TOKEN: ""
+      FORCE_DOWNLOAD: "false"
+      USE_INT8: "false"
+      TOKENS_FILE: "config.json"
+      NUM_THREADS: "4"
+      PROVIDER: "cpu"
+      API_HOST: "0.0.0.0"
+      API_PORT: "8090"
+      LOG_LEVEL: "INFO"
+    volumes:
+      - ./model:/app/model
+    depends_on:
+      - wyoming-vietnamese-asr
+    restart: unless-stopped

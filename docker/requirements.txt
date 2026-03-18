@@ -3,8 +3,11 @@
 # Wyoming protocol support
 wyoming==1.5.0
 
+# ✅ THÊM DÒNG NÀY - sherpa-onnx (bao gồm onnxruntime bên trong)
+sherpa-onnx
+
 # ASR model dependencies (CPU version for Docker)
-onnxruntime==1.16.3
+# onnxruntime==1.16.3
 soundfile==0.12.1
 numpy==1.26.2
 
@@ -18,3 +21,6 @@ requests==2.31.0
 aiofiles==23.2.1
 pydantic==2.5.0
 scipy==1.11.4
+
+# download model
+huggingface_hub[cli]
