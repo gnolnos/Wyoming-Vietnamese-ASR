@@ -63,15 +63,6 @@
 
 ---
 
-## 📝 Cấu hình Add-on
-
-```yaml
-embedding_model: qwen3-embedding:4b
-log_level: info
-```
-
----
-
 ## 🔗 Liên kết
 
 - **Repository:** [github.com/gnolnos/Wyoming-Vietnamese-ASR](https://github.com/gnolnos/Wyoming-Vietnamese-ASR)
