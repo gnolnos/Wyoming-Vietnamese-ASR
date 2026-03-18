@@ -4,17 +4,16 @@ set -e
 CONFIG_PATH=/data/options.json
 
 # Read configuration
-EMBEDDING_MODEL=$(jq --raw-output '.embedding_model // "qwen3-embedding:4b"' "$CONFIG_PATH")
 LOG_LEVEL=$(jq --raw-output '.log_level // "info"' "$CONFIG_PATH")
 
-# Set Rust log level
+# Set log level
 export RUST_LOG="${LOG_LEVEL}"
+export LOG_LEVEL="${LOG_LEVEL}"
 
 echo "====================================="
 echo "🧠 Wyoming Vietnamese ASR Add-on"
 echo "====================================="
-echo "Model: Zipformer-30M-RNNT-6000h"
-echo "Embedding: ${EMBEDDING_MODEL}"
+echo "Model: hynt/Zipformer-30M-RNNT-6000h"
 echo "Log level: ${LOG_LEVEL}"
 echo "====================================="
 
