@@ -6,6 +6,8 @@ FROM ${BUILD_FROM}
 RUN apk add --no-cache \
     python3 \
     py3-pip \
+    bash \
+    jq \
     ffmpeg \
     libsndfile \
     py3-numpy
