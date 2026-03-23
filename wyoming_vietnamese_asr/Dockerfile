@@ -10,7 +10,6 @@ RUN apk add --no-cache \
     jq \
     ffmpeg \
     libsndfile
-# Note: numpy installed via pip (soundfile dependency) to avoid conflict with system numpy
 
 # Set working directory
 WORKDIR /app
@@ -21,7 +20,7 @@ RUN pip3 install --no-cache-dir --break-system-packages \
     soundfile==0.12.1 \
     fastapi==0.104.1 \
     uvicorn==0.24.0 \
-    onnxruntime==1.16.3
+    onnxruntime==1.16.3 \
     huggingface-hub==0.20.3
 
 # Labels
@@ -30,7 +29,7 @@ LABEL \
     io.hass.description="Vietnamese Automatic Speech Recognition using Wyoming protocol. Model: Zipformer-30M-RNNT-6000h (WER 7.97%)." \
     io.hass.arch="amd64|aarch64" \
     io.hass.type="addon" \
-    io.hass.version="1.0.0" \
+    io.hass.version="1.0.2" \
     org.opencontainers.image.title="Wyoming Vietnamese ASR" \
     org.opencontainers.image.description="Vietnamese ASR for Home Assistant" \
     org.opencontainers.image.vendor="gnolnos" \
@@ -44,6 +43,7 @@ WORKDIR /app
 
 # Copy server files
 COPY server/ ./server/
+COPY download_model.py /app/download_model.py
 COPY run.sh /run.sh
 RUN chmod a+x /run.sh
 
