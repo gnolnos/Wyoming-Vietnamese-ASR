@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """
 Wyoming Protocol Server for Vietnamese ASR (Zipformer-30M-RNNT)
-Uses wyoming library's AsyncServer pattern for proper protocol handling
+Optimized: silence filtering, reduced threads, detailed metrics.
 """
 
 import asyncio
 import logging
+import time
 from pathlib import Path
 
 import numpy as np
@@ -30,9 +31,12 @@ TOKENS_PATH = MODEL_DIR / "tokens.txt"
 
 recognizer = None
 
+# VAD filtering: min audio bytes for ~0.5s @ 16kHz 16-bit mono
+MIN_AUDIO_BYTES = 16000 * 2 * 0.5  # 16000 samples/sec * 2 bytes/sample * 0.5 sec
+
 
 def load_model():
-    """Load the Zipformer model"""
+    """Load the Zipformer model once."""
     global recognizer
     _LOGGER.info("Loading Vietnamese ASR model...")
     _LOGGER.info(f"Model dir: {MODEL_DIR}")
@@ -43,7 +47,7 @@ def load_model():
         decoder=str(DECODER_PATH),
         joiner=str(JOINER_PATH),
         tokens=str(TOKENS_PATH),
-        num_threads=4,
+        num_threads=2,  # reduce threads to save RAM
         sample_rate=16000,
         provider="cpu",
     )
@@ -58,6 +62,7 @@ class VietnameseASREventHandler(AsyncEventHandler):
         self.audio_buffer = bytearray()
         self.sample_rate = 16000
         self.channels = 1
+        self.start_time = None
 
     async def handle_event(self, event: Event) -> bool:
         """Handle incoming Wyoming events"""
@@ -66,14 +71,14 @@ class VietnameseASREventHandler(AsyncEventHandler):
             info = Info(
                 asr=[
                     AsrProgram(
-                        name="vietnamese_asr",
+                        name="vietnamese_asr_optimized",
                         attribution=Attribution(
                             name="hynth",
                             url="https://huggingface.co/hynt/Zipformer-30M-RNNT-6000h",
                         ),
                         installed=True,
-                        description="Vietnamese ASR (Zipformer-30M-RNNT-6000h)",
-                        version="1.0.0",
+                        description="Vietnamese ASR (Zipformer-30M-RNNT-6000h) - Optimized",
+                        version="1.0.1",
                         models=[
                             AsrModel(
                                 name="zipformer-vietnamese-30m",
@@ -83,7 +88,7 @@ class VietnameseASREventHandler(AsyncEventHandler):
                                 ),
                                 installed=True,
                                 description="Zipformer-30M-RNNT-6000h - WER 7.97% on VLSP2025",
-                                version="1.0.0",
+                                version="1.0.1",
                                 languages=["vi"],
                             )
                         ],
@@ -98,21 +103,25 @@ class VietnameseASREventHandler(AsyncEventHandler):
             self.sample_rate = audio_start.rate
             self.channels = audio_start.channels
             self.audio_buffer = bytearray()
+            self.start_time = time.time()
             _LOGGER.info(f"Audio started: rate={self.sample_rate}, channels={self.channels}")
             return True
 
         if AudioChunk.is_type(event.type):
             chunk = AudioChunk.from_event(event)
             self.audio_buffer.extend(chunk.audio)
-            _LOGGER.debug(f"Audio chunk received: {len(chunk.audio)} bytes")
+            _LOGGER.debug(f"Audio chunk received: {len(chunk.audio)} bytes, total: {len(self.audio_buffer)}")
             return True
 
         if AudioStop.is_type(event.type):
-            _LOGGER.info(f"Audio stopped, buffer size: {len(self.audio_buffer)} bytes")
+            duration = time.time() - self.start_time if self.start_time else 0
+            _LOGGER.info(f"Audio stopped, buffer size: {len(self.audio_buffer)} bytes, capture duration: {duration:.2f}s")
             
-            if len(self.audio_buffer) == 0:
-                _LOGGER.warning("Empty audio buffer")
+            if len(self.audio_buffer) < MIN_AUDIO_BYTES:
+                _LOGGER.warning(f"Audio buffer too short ({len(self.audio_buffer)} bytes < {MIN_AUDIO_BYTES}), skipping transcription")
                 await self.write_event(Transcript(text="").event())
+                self.audio_buffer = bytearray()
+                self.start_time = None
                 return True
 
             try:
@@ -123,7 +132,7 @@ class VietnameseASREventHandler(AsyncEventHandler):
                 if self.channels > 1:
                     audio_data = audio_data.reshape(-1, self.channels).mean(axis=1)
                 
-                # Create stream and transcribe
+                # Create stream and transcribe (fresh stream per request)
                 stream = recognizer.create_stream()
                 stream.accept_waveform(self.sample_rate, audio_data)
                 recognizer.decode_stream(stream)
@@ -138,12 +147,12 @@ class VietnameseASREventHandler(AsyncEventHandler):
                 await self.write_event(Transcript(text="").event())
             
             self.audio_buffer = bytearray()
+            self.start_time = None
             return True
 
         if Transcribe.is_type(event.type):
             _LOGGER.info("Transcribe event received (treating as AudioStop)")
-            # Handle as if AudioStop
-            if len(self.audio_buffer) > 0:
+            if len(self.audio_buffer) >= MIN_AUDIO_BYTES:
                 try:
                     audio_data = np.frombuffer(self.audio_buffer, dtype=np.int16).astype(np.float32) / 32768.0
                     if self.channels > 1:
@@ -162,27 +171,28 @@ class VietnameseASREventHandler(AsyncEventHandler):
                     await self.write_event(Transcript(text="").event())
                 finally:
                     self.audio_buffer = bytearray()
+                    self.start_time = None
+            else:
+                _LOGGER.warning(f"Transcribe with short buffer ({len(self.audio_buffer)} bytes), skipping")
+                await self.write_event(Transcript(text="").event())
+                self.audio_buffer = bytearray()
+                self.start_time = None
             return True
 
         _LOGGER.debug(f"Unhandled event type: {event.type}")
         return True
 
 
-def handler_factory(reader, writer):
-    """Factory function to create event handlers"""
-    return VietnameseASREventHandler(reader, writer)
-
-
 async def main():
     """Main entry point"""
-    _LOGGER.info("Starting Wyoming Vietnamese ASR Server")
+    _LOGGER.info("Starting Wyoming Vietnamese ASR Server (Optimized)")
     
     load_model()
     
     server = AsyncServer.from_uri("tcp://0.0.0.0:10400")
     _LOGGER.info("Wyoming server listening on 0.0.0.0:10400")
     
-    await server.run(handler_factory)
+    await server.run(VietnameseASREventHandler.factory)
 
 
 if __name__ == "__main__":

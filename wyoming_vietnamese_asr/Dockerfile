@@ -2,21 +2,21 @@
 ARG BUILD_FROM
 FROM ${BUILD_FROM}
 
-# Install dependencies
+# Install dependencies (Alpine)
 RUN apk add --no-cache \
     python3 \
     py3-pip \
     bash \
     jq \
     ffmpeg \
-    libsndfile \
-    py3-numpy
+    libsndfile
+# Note: numpy installed via pip (soundfile dependency) to avoid conflict with system numpy
 
 # Set working directory
 WORKDIR /app
 
-# Install Python packages
-RUN pip3 install --no-cache-dir \
+# Install Python packages (--break-system-packages for Alpine PEP 668)
+RUN pip3 install --no-cache-dir --break-system-packages \
     wyoming==1.5.0 \
     soundfile==0.12.1 \
     fastapi==0.104.1 \
