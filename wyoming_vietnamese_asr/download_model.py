@@ -9,6 +9,7 @@ Files needed:
 - bpe.model
 """
 
+import os
 import sys
 from pathlib import Path
 
@@ -19,7 +20,7 @@ except ImportError:
     sys.exit(1)
 
 REPO_ID = "hynt/Zipformer-30M-RNNT-6000h"
-MODEL_DIR = Path("/data/model")
+MODEL_DIR = Path(os.getenv("MODEL_PATH", "/data/model"))
 MODEL_DIR.mkdir(parents=True, exist_ok=True)
 
 FILES = [
@@ -31,7 +32,7 @@ FILES = [
 ]
 
 def main():
-    print(f"🔽 Downloading model from {REPO_ID}...")
+    print(f"🔽 Downloading model from {REPO_ID} to {MODEL_DIR}...")
     for filename in FILES:
         dest = MODEL_DIR / filename
         if dest.exists():

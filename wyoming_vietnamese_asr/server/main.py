@@ -6,6 +6,7 @@ Optimized: silence filtering, reduced threads, detailed metrics.
 
 import asyncio
 import logging
+import os
 import time
 from pathlib import Path
 
@@ -23,7 +24,8 @@ logging.basicConfig(
 )
 _LOGGER = logging.getLogger(__name__)
 
-MODEL_DIR = Path("/app/model")
+# Use MODEL_PATH env (set by run.sh), default /data/model
+MODEL_DIR = Path(os.getenv("MODEL_PATH", "/data/model"))
 ENCODER_PATH = MODEL_DIR / "encoder-epoch-20-avg-10.onnx"
 DECODER_PATH = MODEL_DIR / "decoder-epoch-20-avg-10.onnx"
 JOINER_PATH = MODEL_DIR / "joiner-epoch-20-avg-10.onnx"
