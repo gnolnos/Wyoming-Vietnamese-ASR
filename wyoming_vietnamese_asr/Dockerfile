@@ -22,7 +22,7 @@ RUN pip3 install --no-cache-dir --break-system-packages \
     fastapi==0.104.1 \
     uvicorn==0.24.0 \
     onnxruntime==1.16.3
-    huggingface-hub>=0.20.0
+    huggingface-hub==0.20.3
 
 # Labels
 LABEL \
