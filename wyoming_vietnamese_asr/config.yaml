@@ -1,9 +1,10 @@
 # Home Assistant Add-on: Wyoming Vietnamese ASR
 name: "Wyoming Vietnamese ASR"
 description: "Vietnamese Automatic Speech Recognition (ASR) add-on using Wyoming protocol. Model: Zipformer-30M-RNNT-6000h (WER 7.97%)."
-version: "1.0.1"
+version: "1.0.2"
 slug: "wyoming_vietnamese_asr"
 url: "https://github.com/gnolnos/Wyoming-Vietnamese-ASR"
+icon: "/icon.png"
 arch:
   - aarch64
   - amd64
