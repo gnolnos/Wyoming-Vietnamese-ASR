@@ -17,6 +17,13 @@ echo "Model: hynt/Zipformer-30M-RNNT-6000h"
 echo "Log level: ${LOG_LEVEL}"
 echo "====================================="
 
+# Ensure model directory exists
+mkdir -p /data/model
+
+# Download model if not present
+echo "🔽 Checking model files..."
+python3 /app/download_model.py
+
 # Change to app directory
 cd /app
 
