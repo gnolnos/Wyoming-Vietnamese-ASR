@@ -1,43 +1,19 @@
-# Wyoming Vietnamese ASR Add-on
+# Wyoming Vietnamese ASR Add-on - Minimal build
 ARG BUILD_FROM
 FROM ${BUILD_FROM}
 
-# Install dependencies (Alpine)
-RUN apk add --no-cache python3 py3-pip bash jq ffmpeg libsndfile
-
+# Set working directory
 WORKDIR /app
 
-# Install Python packages (--break-system-packages for Alpine PEP 668)
-RUN pip3 install --no-cache-dir --break-system-packages \
-    wyoming==1.4.0 \
-    soundfile==0.12.1 \
-    fastapi==0.104.1 \
-    uvicorn==0.24.0 \
-    onnxruntime==1.16.3 \
-    huggingface-hub==0.20.3
-
-LABEL \
-    io.hass.name="Wyoming Vietnamese ASR" \
-    io.hass.description="Vietnamese Automatic Speech Recognition using Wyoming protocol. Model: Zipformer-30M-RNNT-6000h (WER 7.97%)." \
-    io.hass.arch="amd64|aarch64" \
-    io.hass.type="addon" \
-    io.hass.version="1.0.2" \
-    org.opencontainers.image.title="Wyoming Vietnamese ASR" \
-    org.opencontainers.image.description="Vietnamese ASR for Home Assistant" \
-    org.opencontainers.image.vendor="gnolnos" \
-    org.opencontainers.image.authors="gnolnos <https://github.com/gnolnos>" \
-    org.opencontainers.image.url="https://github.com/gnolnos/Wyoming-Vietnamese-ASR" \
-    org.opencontainers.image.source="https://github.com/gnolnos/Wyoming-Vietnamese-ASR"
-
-USER root
-
-WORKDIR /app
-
+# Copy only required files (no pip install at build time)
 COPY server/ ./server/
 COPY download_model.py /app/download_model.py
+COPY requirements.txt /app/requirements.txt
 COPY run.sh /run.sh
+
 RUN chmod a+x /run.sh
 
+# Create data directory for models
 RUN mkdir -p /data
 
 EXPOSE 10400 8090
