@@ -1,7 +1,11 @@
 services:
 
   wyoming-vietnamese-asr:
-    image: mkbyme/wyoming-vietnamese-asr:1.0.9
+    # Build từ Dockerfile local (chứa auto-download) — không dùng image cũ thiếu auto-download
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: mkbyme/wyoming-vietnamese-asr:1.0.10
     container_name: wyoming-vietnamese-asr
     user: "root"
     ports:
@@ -17,11 +21,15 @@ services:
       PROVIDER: "cpu"
       LOG_LEVEL: "INFO"
     volumes:
-      - ./model:/app/model
+      - ./model:/app/model     # Model tự tải về đây khi khởi động lần đầu
     restart: unless-stopped
 
   wyoming-fastapi:
-    image: mkbyme/wyoming-vietnamese-asr:1.0.9
+    # Build từ Dockerfile local (chứa auto-download) — không dùng image cũ thiếu auto-download
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: mkbyme/wyoming-vietnamese-asr:1.0.10
     container_name: wyoming-fastapi
     user: "root"
     ports:
@@ -39,7 +47,7 @@ services:
       API_PORT: "8090"
       LOG_LEVEL: "INFO"
     volumes:
-      - ./model:/app/model
+      - ./model:/app/model     # Model tự tải khi khởi động lần đầu
     depends_on:
       - wyoming-vietnamese-asr
     restart: unless-stopped
