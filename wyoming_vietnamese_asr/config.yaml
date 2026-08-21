@@ -1,7 +1,7 @@
 # Home Assistant Add-on: Wyoming Vietnamese ASR
 name: "Wyoming Vietnamese ASR"
 description: "Vietnamese Automatic Speech Recognition (ASR) add-on using Wyoming protocol. Model: Zipformer-30M-RNNT-6000h (WER 7.97%)."
-version: "1.0.4"
+version: "1.0.5"
 slug: "wyoming_vietnamese_asr"
 url: "https://github.com/gnolnos/Wyoming-Vietnamese-ASR"
 icon: "/icon.png"
@@ -18,7 +18,9 @@ ports:
   8090/tcp: 8090
 options:
   external_model_path: "/data/model"  # Optional: external model dir (host path inside container). Default: /data/model (persisted in addon config)
+  use_int8: false  # Optional: use smaller INT8 ONNX variant (faster on CPU, slight WER trade-off)
   log_level: "info"
 schema:
   external_model_path: "str?"
+  use_int8: "bool?"
   log_level: match(info|debug|warn|error)

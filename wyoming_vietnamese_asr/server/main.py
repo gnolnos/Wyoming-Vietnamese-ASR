@@ -24,17 +24,67 @@ logging.basicConfig(
 )
 _LOGGER = logging.getLogger(__name__)
 
+
+def _get_bool(key: str, default: bool = False) -> bool:
+    return os.environ.get(key, str(default)).lower() in ("1", "true", "yes")
+
+
 # Use MODEL_PATH env (set by run.sh), default /data/model
 MODEL_DIR = Path(os.getenv("MODEL_PATH", "/data/model"))
-ENCODER_PATH = MODEL_DIR / "encoder-epoch-20-avg-10.onnx"
-DECODER_PATH = MODEL_DIR / "decoder-epoch-20-avg-10.onnx"
-JOINER_PATH = MODEL_DIR / "joiner-epoch-20-avg-10.onnx"
-TOKENS_PATH = MODEL_DIR / "tokens.txt"
+USE_INT8 = _get_bool("USE_INT8", False)
+_suffix = ".int8.onnx" if USE_INT8 else ".onnx"
+_base = "epoch-20-avg-10"
+ENCODER_PATH = MODEL_DIR / f"encoder-{_base}{_suffix}"
+DECODER_PATH = MODEL_DIR / f"decoder-{_base}{_suffix}"
+JOINER_PATH = MODEL_DIR / f"joiner-{_base}{_suffix}"
+# The BPE vocab in this HF repo is `config.json` (NOT tokens.txt).
+TOKENS_PATH = MODEL_DIR / "config.json"
+
+HF_MODEL_ID = os.getenv("HF_MODEL_ID", "hynt/Zipformer-30M-RNNT-6000h")
 
 recognizer = None
 
 # VAD filtering: min audio bytes for ~0.5s @ 16kHz 16-bit mono
 MIN_AUDIO_BYTES = 16000 * 2 * 0.5  # 16000 samples/sec * 2 bytes/sample * 0.5 sec
+
+
+def download_model() -> None:
+    """Download the model from HuggingFace if missing (idempotent)."""
+    import sys
+
+    try:
+        from huggingface_hub import snapshot_download
+    except ImportError:
+        _LOGGER.error("huggingface_hub not installed — cannot auto-download model.")
+        raise
+
+    MODEL_DIR.mkdir(parents=True, exist_ok=True)
+    _LOGGER.info(f"📥 Downloading model {HF_MODEL_ID} → {MODEL_DIR}")
+    allow = ["*.int8.onnx", "config.json", "bpe.model"] if USE_INT8 else ["*.onnx", "config.json", "bpe.model"]
+    ignore = [] if USE_INT8 else ["*.int8.onnx"]
+    snapshot_download(
+        repo_id=HF_MODEL_ID,
+        local_dir=str(MODEL_DIR),
+        allow_patterns=allow,
+        ignore_patterns=ignore,
+    )
+    _LOGGER.info("✅ Model downloaded")
+
+
+def ensure_model() -> None:
+    """Ensure all required model files exist, downloading if needed."""
+    required = [ENCODER_PATH, DECODER_PATH, JOINER_PATH, TOKENS_PATH]
+    missing = [p for p in required if not p.exists()]
+    if missing:
+        _LOGGER.info(f"⚠️  Missing model files: {[p.name for p in missing]} → downloading...")
+        download_model()
+        still_missing = [p for p in required if not p.exists()]
+        if still_missing:
+            raise FileNotFoundError(
+                f"Model still incomplete after download: {[p.name for p in still_missing]}"
+            )
+    else:
+        _LOGGER.info("✅ All model files present, skipping download")
 
 
 def load_model():
@@ -76,7 +126,7 @@ class VietnameseASREventHandler(AsyncEventHandler):
                         name="vietnamese_asr_optimized",
                         attribution=Attribution(
                             name="hynth",
-                            url="https://huggingface.co/hynt/Zipformer-30M-RNNT-6000h",
+                            url=f"https://huggingface.co/{HF_MODEL_ID}",
                         ),
                         installed=True,
                         description="Vietnamese ASR (Zipformer-30M-RNNT-6000h) - Optimized",
@@ -86,7 +136,7 @@ class VietnameseASREventHandler(AsyncEventHandler):
                                 name="zipformer-vietnamese-30m",
                                 attribution=Attribution(
                                     name="hynth",
-                                    url="https://huggingface.co/hynt/Zipformer-30M-RNNT-6000h",
+                                    url=f"https://huggingface.co/{HF_MODEL_ID}",
                                 ),
                                 installed=True,
                                 description="Zipformer-30M-RNNT-6000h - WER 7.97% on VLSP2025",
@@ -188,12 +238,14 @@ class VietnameseASREventHandler(AsyncEventHandler):
 async def main():
     """Main entry point"""
     _LOGGER.info("Starting Wyoming Vietnamese ASR Server (Optimized)")
-    
+
+    # Ensure model is present — auto-download from HuggingFace if missing
+    ensure_model()
     load_model()
-    
+
     server = AsyncServer.from_uri("tcp://0.0.0.0:10400")
     _LOGGER.info("Wyoming server listening on 0.0.0.0:10400")
-    
+
     await server.run(VietnameseASREventHandler.factory)
 
 

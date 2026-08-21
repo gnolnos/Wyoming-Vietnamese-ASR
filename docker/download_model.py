@@ -26,7 +26,8 @@ except ImportError:
     sys.exit(1)
 
 REPO_ID = os.getenv("HF_MODEL_ID", "hynt/Zipformer-30M-RNNT-6000h")
-MODEL_DIR = Path(os.getenv("MODEL_PATH", "/data/model"))
+# NOTE: standalone docker dùng /app/model; add-on HA dùng /data/model (set qua run.sh).
+MODEL_DIR = Path(os.getenv("MODEL_PATH", "/app/model"))
 FORCE = os.getenv("FORCE_DOWNLOAD", "false").lower() in ("1", "true", "yes")
 USE_INT8 = os.getenv("USE_INT8", "false").lower() in ("1", "true", "yes")
 

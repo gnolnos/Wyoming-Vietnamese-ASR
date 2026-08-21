@@ -27,6 +27,10 @@ WORKDIR /app
 COPY --from=builder /install /usr/local
 COPY server/ ./server/
 COPY fastapi_server.py .
+COPY download_model.py /app/download_model.py
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+USER root
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
 RUN mkdir -p /app/model \
     && useradd -m -u 1000 appuser \
@@ -63,9 +67,5 @@ s = socket.socket(); s.settimeout(5); r = s.connect_ex(('localhost', port)); s.c
 # ── CMD theo MODE ─────────────────────────────────────────────
 # MODE=wyoming  → Wyoming server  [default]
 # MODE=fastapi  → FastAPI server
-CMD ["/bin/sh", "-c", "\
-  if [ \"$MODE\" = 'fastapi' ]; then \
-    exec python fastapi_server.py; \
-  else \
-    exec python server/main.py; \
-  fi"]
+# Entrypoint tự tải model nếu chưa có, rồi mới start server.
+CMD ["/usr/local/bin/entrypoint.sh"]
