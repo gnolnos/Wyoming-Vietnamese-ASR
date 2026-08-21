@@ -27,14 +27,23 @@ echo "Model path: ${MODEL_PATH}"
 echo "USE_INT8: ${USE_INT8}"
 echo "====================================="
 
-# Install system dependencies (Alpine) - idempotent
+# Install system dependencies (Debian/glibc) - idempotent
 echo "📦 Ensuring system dependencies..."
-apk add --no-cache python3 py3-pip bash jq ffmpeg libsndfile || true
+apt-get update -qq
+apt-get install -y --no-install-recommends \
+    python3 \
+    python3-pip \
+    bash \
+    jq \
+    ffmpeg \
+    libsndfile1 \
+    || true
 
 # Install Python packages (first run only)
+# Debian bookworm python3 is externally-managed (PEP 668), need --break-system-packages
 echo "🔧 Installing Python packages..."
 pip3 install --no-cache-dir --break-system-packages \
-    wyoming==1.4.0 \
+    wyoming==1.5.0 \
     soundfile==0.12.1 \
     fastapi==0.104.1 \
     uvicorn==0.24.0 \

@@ -1,5 +1,8 @@
 # https://developers.home-assistant.io/docs/add-ons/configuration#build-configuration
+# Dùng base Debian (glibc), KHÔNG dùng Alpine (musl):
+# onnxruntime & sherpa-onnx chỉ ship manylinux (glibc) wheels, không có wheel
+# cho musl/Alpine -> pip buộc build từ source -> lỗi dependency trên HassOS.
 build_from:
-  aarch64: "ghcr.io/home-assistant/aarch64-base:latest"
-  amd64: "ghcr.io/home-assistant/amd64-base:latest"
+  aarch64: "ghcr.io/home-assistant/aarch64-base-debian:bookworm"
+  amd64: "ghcr.io/home-assistant/amd64-base-debian:bookworm"
 args: {}
