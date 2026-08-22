@@ -12,8 +12,8 @@
 #
 #  LƯU Ý: Image được public trên GHCR + Docker Hub cùng lúc qua GitHub
 #  Actions (build.yml) — khi push tag v* thì pull anon được ngay.
-#    - GHCR      : ghcr.io/gnolnos/wyoming-vietnamese-asr:v1.2.0
-#    - Docker Hub: gnolnos/wyoming-vietnamese-asr:v1.2.0
+#    - GHCR      : ghcr.io/gnolnos/wyoming-vietnamese-asr:v1.3.0
+#    - Docker Hub: gnolnos/wyoming-vietnamese-asr:v1.3.0
 #  Nếu pull báo lỗi auth, chạy: docker login ghcr.io -u gnolnos
 #
 #  ┌─────────────────────────────────────────────────────────┐
@@ -26,7 +26,7 @@ services:
 
   # ---- [TAI] Wyoming server :10400 → Home Assistant ----
   wyoming-asr:
-    image: ghcr.io/gnolnos/wyoming-vietnamese-asr:v1.2.0
+    image: ghcr.io/gnolnos/wyoming-vietnamese-asr:v1.3.0
     container_name: wyoming-asr
     user: "root"                       # cần ghi vào ./model (bind mount)
     network_mode: host                 # HA quản trên cùng LAN/localhost
@@ -52,7 +52,7 @@ services:
   # nhận text (không cần qua HA). Nếu chỉ cần Wyoming → HA thì để
   # im phần này (comment).
   fastapi-asr:
-    image: ghcr.io/gnolnos/wyoming-vietnamese-asr:v1.2.0
+    image: ghcr.io/gnolnos/wyoming-vietnamese-asr:v1.3.0
     container_name: fastapi-asr
     user: "root"
     network_mode: host
