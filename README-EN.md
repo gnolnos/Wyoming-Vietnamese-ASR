@@ -34,6 +34,8 @@ Add this repository to Home Assistant:
 - ⚡ **Độ trễ thấp**: Xử lý real-time trên CPU hoặc GPU
 - 🐳 **Docker support**: Chạy standalone bên ngoài Home Assistant
 - 🔧 **Dễ cấu hình**: UI configuration qua Home Assistant
+- 🤖 **Tự tải model**: Lần đầu chạy tự kéo model ~200MB từ HuggingFace, không cần thao tác tay
+- 🔄 **Tự check & cập nhật model**: Mỗi lần khởi động tự dò version model mới (theo commit SHA của repo HF) và tự tải bản mới nếu có. Tắt bằng `CHECK_UPDATE=false`
 
 ## 📊 Thông tin Model
 
@@ -68,15 +70,20 @@ Add this repository to Home Assistant:
 ```bash
 # Clone repository
 git clone https://github.com/gnolnos/wyoming-vietnamese-asr.git
-cd wyoming-vietnamese-asr/docker
+cd wyoming-vietnamese-asr
 
-# Tạo thư mục model và tải model
-mkdir model
-# Tải model từ HuggingFace và đặt vào thư mục model
+# Chọn 1 trong 3 template compose và chạy:
+docker compose up -d                       # cả Wyoming :10400 + FastAPI :8090
+# docker compose -f compose.wyoming.yaml up -d   # chỉ Wyoming
+# docker compose -f compose.fastapi.yaml up -d   # chỉ FastAPI
 
-# Khởi động dịch vụ
-docker compose up -d
+# Kiểm tra
+curl http://localhost:8090/health          # → {"status":"ok"}
+docker logs wyoming-asr                    # xem auto-download model + check revision
 ```
+
+- Model **tự động tải lần đầu** (~200MB) vào `./model` (bind mount) — không cần làm gì.
+- Image: GHCR public `ghcr.io/gnolnos/wyoming-vietnamese-asr:v1.3.0` (tương đương Docker Hub `gnolnos/wyoming-vietnamese-asr:v1.3.0`).
 
 ## ⚙️ Cấu hình
 
@@ -93,21 +100,17 @@ docker compose up -d
 
 ### Cấu hình Docker standalone
 
-```yaml
-services:
-  wyoming-vietnamese-asr:
-    image: gnolnos/wyoming-vietnamese-asr:latest
-    container_name: wyoming-vietnamese-asr
-    ports:
-      - "10400:10400"  # Wyoming protocol
-      - "8090:8090"    # FastAPI (tùy chọn)
-    environment:
-      - TZ=Asia/Saigon
-      - MODEL_PATH=/app/model
-    volumes:
-      - ./model:/app/model:ro
-    restart: unless-stopped
+Dùng một trong các file compose ở root repo (image GHCR public, tự tải model):
+
+- `compose.yaml` — Wyoming :10400 **+** FastAPI :8090 (mặc định, cần cả 2)
+- `compose.wyoming.yaml` — chỉ Wyoming :10400
+- `compose.fastapi.yaml` — chỉ FastAPI :8090
+
+```bash
+docker compose up -d                 # hoặc docker compose -f compose.<variant>.yaml up -d
 ```
+
+Network dùng **bridge + publish port** (không `network_mode: host`) nên chạy được trên mọi nền tảng (Docker Desktop/Mac/WSL). HA nối tới `wyoming-asr:10400`. Model tự tải vào `./model` (bind mount cần quyền ghi — `user: root` được giữ cho việc này).
 
 ## 🎤 Sử dụng
 
@@ -117,7 +120,7 @@ Sau khi cài đặt, tích hợp sẽ xuất hiện như một nhà cung cấp S
 
 1. Vào **Cài đặt** → **Trợ lý giọng nói**
 2. Chọn trợ lý của bạn
-3. Chọn **"Vietnamese ASR"** làmengine **Speech-to-Text**
+3. Chọn **"Vietnamese ASR"** làm engine **Speech-to-Text**
 4. Bắt đầu nói tiếng Việt!
 
 ### API REST (cho Xiaozzi và tích hợp ngoài)
@@ -160,51 +163,35 @@ curl -X POST "http://localhost:8090/transcribe" \
 
 ## 🐳 Docker Deployment
 
-### Wyoming Server (chính)
+Repo có sẵn **3 template compose** ở root (image GHCR public, tự tải model):
 
-```yaml
-services:
-  wyoming:
-    image: gnolnos/wyoming-vietnamese-asr:latest
-    ports:
-      - "10400:10400"
-    volumes:
-      - ./model:/app/model:ro
-    environment:
-      - TZ=Asia/Saigon
-    restart: unless-stopped
-    # Bật GPU (nếu có):
-    # devices:
-    #   - /dev/dri:/dev/dri
-```
-
-### FastAPI Server (cho Xiaozzi)
-
-```yaml
-services:
-  fastapi:
-    image: gnolnos/wyoming-vietnamese-asr:fastapi
-    ports:
-      - "8090:8090"
-    volumes:
-      - ./model:/app/model:ro
-    environment:
-      - TZ=Asia/Saigon
-    restart: unless-stopped
-```
-
-### Docker Compose đầy đủ
+### Cả Wyoming + FastAPI (mặc định) — `compose.yaml`
 
 ```bash
-cd docker
+cd wyoming-vietnamese-asr
 docker compose up -d
 
 # Kiểm tra trạng thái
 docker compose ps
+docker inspect wyoming-asr --format '{{.State.Health.Status}}'   # → healthy
 
-# Xem log
+# Xem log (auto-download model, check revision)
 docker compose logs -f
 ```
+
+### Chỉ Wyoming — `compose.wyoming.yaml`
+
+```bash
+docker compose -f compose.wyoming.yaml up -d   # port 10400 cho HA
+```
+
+### Chỉ FastAPI — `compose.fastapi.yaml`
+
+```bash
+docker compose -f compose.fastapi.yaml up -d   # port 8090 /transcribe cho script
+```
+
+Tất cả dùng **bridge + publish port** (không `network_mode: host`), `user: root` để ghi bind mount `./model`, và healthcheck rõ ràng trên mỗi service.
 
 ## 🔧 Xử lý sự cố
 
