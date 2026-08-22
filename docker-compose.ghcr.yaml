@@ -1,0 +1,71 @@
+# ============================================================
+#  Wyoming Vietnamese ASR — Triển khai trên Unraid
+#  (Z.O.L.A "TAI" — Speech-to-Text tiếng Việt)
+#  DÙNG IMAGE GHCR PUBLIC (không cần build)
+# ============================================================
+#  Cách dùng trên Unraid:
+#   1. docker compose up -d
+#      (lần đầu sẽ pull image ghcr.io + tự tải model ~200MB)
+#   2. Kiểm tra:
+#        docker logs wyoming-asr
+#        curl http://localhost:8090/health   (nếu dùng cả fastapi)
+#
+#  LƯU Ý: Image được public trên GHCR + Docker Hub cùng lúc qua GitHub
+#  Actions (build.yml) — khi push tag v* thì pull anon được ngay.
+#    - GHCR      : ghcr.io/gnolnos/wyoming-vietnamese-asr:v1.2.0
+#    - Docker Hub: gnolnos/wyoming-vietnamese-asr:v1.2.0
+#  Nếu pull báo lỗi auth, chạy: docker login ghcr.io -u gnolnos
+#
+#  ┌─────────────────────────────────────────────────────────┐
+#  │ • wyoming-asr :10400  → giao thức Wyoming (Home Assistant) │
+#  │ • fastapi-asr :8090   → HTTP POST /transcribe (cho Zola)   │
+#  └─────────────────────────────────────────────────────────┘
+#  Cả hai dùng chung volume ./model (auto-download lần đầu).
+
+services:
+
+  # ---- [TAI] Wyoming server :10400 → Home Assistant ----
+  wyoming-asr:
+    image: ghcr.io/gnolnos/wyoming-vietnamese-asr:v1.2.0
+    container_name: wyoming-asr
+    user: "root"                       # cần ghi vào ./model (bind mount)
+    network_mode: host                 # HA quản trên cùng LAN/localhost
+    environment:
+      MODE: "wyoming"
+      HF_MODEL_ID: "hynt/Zipformer-30M-RNNT-6000h"
+      HF_TOKEN: ""
+      FORCE_DOWNLOAD: "false"
+      USE_INT8: "false"                # true = nhanh hơn, giảm nhẹ độ chính xác
+      TOKENS_FILE: "config.json"
+      NUM_THREADS: "4"
+      PROVIDER: "cpu"
+      SERVER_HOST: "0.0.0.0"
+      SERVER_PORT: "10400"
+      LOG_LEVEL: "INFO"
+    volumes:
+      - ./model:/app/model
+    restart: unless-stopped
+
+  # ---- [TAI] FastAPI HTTP :8090 → Zola/script trực tiếp ----
+  # Bỏ comment khối này nếu muốn Zola gửi file audio qua HTTP để
+  # nhận text (không cần qua HA). Nếu chỉ cần Wyoming → HA thì để
+  # im phần này (comment).
+  fastapi-asr:
+    image: ghcr.io/gnolnos/wyoming-vietnamese-asr:v1.2.0
+    container_name: fastapi-asr
+    user: "root"
+    network_mode: host
+    environment:
+      MODE: "fastapi"
+      HF_MODEL_ID: "hynt/Zipformer-30M-RNNT-6000h"
+      HF_TOKEN: ""
+      FORCE_DOWNLOAD: "false"
+      USE_INT8: "false"
+      TOKENS_FILE: "config.json"
+      NUM_THREADS: "4"
+      API_HOST: "0.0.0.0"
+      API_PORT: "8090"
+      LOG_LEVEL: "INFO"
+    volumes:
+      - ./model:/app/model
+    restart: unless-stopped
