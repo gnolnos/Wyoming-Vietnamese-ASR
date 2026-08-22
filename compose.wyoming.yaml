@@ -1,0 +1,47 @@
+# ============================================================
+#  Wyoming Vietnamese ASR — CHỈ Wyoming server (dành ai không cần FastAPI)
+#  (Z.O.L.A "TAI" — Speech-to-Text tiếng Việt)
+# ============================================================
+#  Dùng image GHCR public, không cần build.
+#    - GHCR      : ghcr.io/gnolnos/wyoming-vietnamese-asr:v1.3.0
+#    - Docker Hub: gnolnos/wyoming-vietnamese-asr:v1.3.0
+#
+#  Cách dùng:
+#    docker compose -f compose.wyoming.yaml up -d
+#    docker logs wyoming-asr          # xem auto-download / check revision
+#    docker inspect wyoming-asr --format '{{.State.Health.Status}}'  # → healthy
+#
+#  Home Assistant kết nối tới: host <máy này> port 10400 (Wyoming protocol)
+#  Muốn cả FastAPI luôn thì dùng compose.yaml (bản đủ cả 2).
+# ============================================================
+
+services:
+
+  wyoming-asr:
+    image: ghcr.io/gnolnos/wyoming-vietnamese-asr:v1.3.0
+    container_name: wyoming-asr
+    user: "root"                    # chỉ để ghi vào ./model (bind mount host)
+    ports:
+      - "10400:10400"               # Wyoming protocol (HA connect qua localhost:10400)
+    environment:
+      MODE: "wyoming"
+      HF_MODEL_ID: "hynt/Zipformer-30M-RNNT-6000h"
+      HF_TOKEN: ""
+      FORCE_DOWNLOAD: "false"
+      CHECK_UPDATE: "true"          # true = tự check & tải model mới mỗi lần chạy
+      USE_INT8: "false"             # true = nhanh hơn, giảm nhẹ độ chính xác
+      TOKENS_FILE: "config.json"
+      NUM_THREADS: "4"
+      PROVIDER: "cpu"
+      SERVER_HOST: "0.0.0.0"
+      SERVER_PORT: "10400"
+      LOG_LEVEL: "INFO"
+    volumes:
+      - ./model:/app/model          # model auto-tải về đây lần đầu
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os,socket;m=os.environ.get('MODE','wyoming');p=int(os.environ.get('SERVER_PORT',10400)) if m=='wyoming' else int(os.environ.get('API_PORT',8090));s=socket.socket();s.settimeout(5);r=s.connect_ex(('127.0.0.1',p));s.close();exit(r)"]
+      interval: 30s
+      timeout: 10s
+      start_period: 180s
+      retries: 5

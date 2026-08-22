@@ -1,0 +1,50 @@
+# ============================================================
+#  Wyoming Vietnamese ASR — CHỈ FastAPI HTTP (dành ai không cần Wyoming)
+#  (Z.O.L.A "TAI" — Speech-to-Text tiếng Việt)
+# ============================================================
+#  Dùng image GHCR public, không cần build.
+#    - GHCR      : ghcr.io/gnolnos/wyoming-vietnamese-asr:v1.3.0
+#    - Docker Hub: gnolnos/wyoming-vietnamese-asr:v1.3.0
+#
+#  Cách dùng:
+#    docker compose -f compose.fastapi.yaml up -d
+#    curl -X POST http://localhost:8090/transcribe \
+#      -H "Content-Type: multipart/form-data" \
+#      -F "audio=@file.wav"
+#    curl http://localhost:8090/health        # → {"status":"ok"}
+#
+#  Muốn cả Wyoming luôn thì dùng compose.yaml (bản đủ cả 2).
+#  NOTE: service này tự tải model riêng vào ./model (độc lập, không phụ thuộc
+#  wyoming) — hữu ích nếu chỉ dùng HTTP mà không cần HA.
+# ============================================================
+
+services:
+
+  fastapi-asr:
+    image: ghcr.io/gnolnos/wyoming-vietnamese-asr:v1.3.0
+    container_name: fastapi-asr
+    user: "root"
+    ports:
+      - "8090:8090"                 # HTTP API /transcribe + /health
+    environment:
+      MODE: "fastapi"
+      HF_MODEL_ID: "hynt/Zipformer-30M-RNNT-6000h"
+      HF_TOKEN: ""
+      FORCE_DOWNLOAD: "false"
+      CHECK_UPDATE: "true"          # true = tự check & tải model mới mỗi lần chạy
+      USE_INT8: "false"
+      TOKENS_FILE: "config.json"
+      NUM_THREADS: "4"
+      PROVIDER: "cpu"
+      API_HOST: "0.0.0.0"
+      API_PORT: "8090"
+      LOG_LEVEL: "INFO"
+    volumes:
+      - ./model:/app/model
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os,socket;m=os.environ.get('MODE','fastapi');p=int(os.environ.get('API_PORT',8090));s=socket.socket();s.settimeout(5);r=s.connect_ex(('127.0.0.1',p));s.close();exit(r)"]
+      interval: 30s
+      timeout: 10s
+      start_period: 180s
+      retries: 5
