@@ -59,7 +59,29 @@
 - 🏠 **Add-on Home Assistant** - Cài đặt 1-click
 - ⚡ **Độ trễ thấp** - Xử lý real-time
 - 🔌 **Wyoming protocol** - Tích hợp native với HA Voice
-- 🐳 **Docker** - Chạy standalone (xem [README-EN](README-EN.md))
+- 🐳 **Docker** - Chạy standalone qua `compose.yaml` chuẩn (xem [README-EN](README-EN.md))
+- 🤖 **Tự tải model** - Lần đầu chạy tự kéo model ~200MB từ HuggingFace, không cần thao tác tay
+- 🔄 **Tự check & cập nhật model** - Mỗi lần khởi động tự dò version model mới (theo commit SHA của repo HF) và tự tải bản mới nếu có. Tắt bằng `CHECK_UPDATE=false`
+
+---
+
+## 🐳 Chạy bằng Docker (standalone)
+
+Dùng image GHCR public (không cần build), tương đương Docker Hub `gnolnos/wyoming-vietnamese-asr:v1.3.0`.
+
+```bash
+# 1. Dùng compose.yaml chuẩn (wyoming :10400 + fastapi :8090)
+docker compose up -d
+
+# 2. Kiểm tra
+curl http://localhost:8090/health        # → {"status":"ok"}
+docker inspect wyoming-asr --format '{{.State.Health.Status}}'   # → healthy
+docker logs wyoming-asr                  # xem: auto-download model, check revision
+```
+
+- **Model tự tải lần đầu** vào `./model` (bind mount, dễ backup như folder bình thường trên Unraid).
+- **Network:** dùng bridge + publish port (không `network_mode: host`) — chạy được mọi nơi. HA nối tới `wyoming-asr:10400`.
+- **Edit nhanh:** chỉ cần 1 trong 2 service trong `compose.yaml` nếu không cần cả 2.
 
 ---
 

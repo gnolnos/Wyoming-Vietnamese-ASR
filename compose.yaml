@@ -1,0 +1,88 @@
+# ============================================================
+#  Wyoming Vietnamese ASR — Docker Compose (bản chuẩn)
+#  (Z.O.L.A "TAI" — Speech-to-Text tiếng Việt)
+# ============================================================
+#  Stack ASR DUY NHẤT: Wyomynh server + FastAPI HTTP.
+#  Dùng image GHCR public (không cần build) — tương đương Docker Hub.
+#    - GHCR      : ghcr.io/gnolnos/wyoming-vietnamese-asr:v1.3.0
+#    - Docker Hub: gnolnos/wyoming-vietnamese-asr:v1.3.0
+#
+#  Cách dùng:
+#    docker compose up -d            # khởi cả 2 service
+#    curl http://localhost:8090/health
+#    docker logs wyoming-asr
+#
+#  Network: dùng bridge + publish port (KHÔNG network_mode: host) — portable
+#  hơn (chạy được trên Docker Desktop/Mac/WSL), không chiếm hết host net.
+#
+#  User: giữ `user: root` ĐỂ GHI vào bind mount ./model (thư mục host thuộc
+#  root/uid khác). Dockerfile đã có appuser (uid 1000); nếu muốn bảo mật hơn,
+#  đổi sang named volume + bỏ user:root (xem README).
+#
+#  Cả 2 service dùng CHUNG ./model: wyoming tải/model cập nhật, fastapi đọc.
+# ============================================================
+
+services:
+
+  # ---- [TAI] Wyoming server :10400 → Home Assistant / Assist ----
+  wyoming-asr:
+    image: ghcr.io/gnolnos/wyoming-vietnamese-asr:v1.3.0
+    container_name: wyoming-asr
+    user: "root"                    # cần ghi vào ./model (bind mount host)
+    ports:
+      - "10400:10400"               # Wyoming protocol (HA connect qua localhost:10400)
+    environment:
+      MODE: "wyoming"
+      HF_MODEL_ID: "hynt/Zipformer-30M-RNNT-6000h"
+      HF_TOKEN: ""
+      FORCE_DOWNLOAD: "false"
+      CHECK_UPDATE: "true"          # true = tự check & tải model mới mỗi lần chạy
+      USE_INT8: "false"             # true = nhanh hơn, giảm nhẹ độ chính xác
+      TOKENS_FILE: "config.json"
+      NUM_THREADS: "4"
+      PROVIDER: "cpu"
+      SERVER_HOST: "0.0.0.0"
+      SERVER_PORT: "10400"
+      LOG_LEVEL: "INFO"
+    volumes:
+      - ./model:/app/model          # model auto-tải về đây lần đầu
+    restart: unless-stopped
+    healthcheck:                    # override rõ ràng (không kế thừa lỗi cũ)
+      test: ["CMD", "python", "-c", "import os,socket;m=os.environ.get('MODE','wyoming');p=int(os.environ.get('SERVER_PORT',10400)) if m=='wyoming' else int(os.environ.get('API_PORT',8090));s=socket.socket();s.settimeout(5);r=s.connect_ex(('127.0.0.1',p));s.close();exit(r)"]
+      interval: 30s
+      timeout: 10s
+      start_period: 180s            # đủ thời gian tải model lần đầu
+      retries: 5
+
+  # ---- [TAI] FastAPI HTTP :8090 → Zola/script trực tiếp (không qua HA) ----
+  # Xóa hẳn service này nếu chỉ dùng Wyoming → HA.
+  fastapi-asr:
+    image: ghcr.io/gnolnos/wyoming-vietnamese-asr:v1.3.0
+    container_name: fastapi-asr
+    user: "root"
+    ports:
+      - "8090:8090"                 # HTTP API /transcribe
+    environment:
+      MODE: "fastapi"
+      HF_MODEL_ID: "hynt/Zipformer-30M-RNNT-6000h"
+      HF_TOKEN: ""
+      FORCE_DOWNLOAD: "false"
+      CHECK_UPDATE: "true"
+      USE_INT8: "false"
+      TOKENS_FILE: "config.json"
+      NUM_THREADS: "4"
+      PROVIDER: "cpu"
+      API_HOST: "0.0.0.0"
+      API_PORT: "8090"
+      LOG_LEVEL: "INFO"
+    volumes:
+      - ./model:/app/model
+    depends_on:
+      - wyoming-asr                  # tải model chung trước, tránh race download
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os,socket;m=os.environ.get('MODE','fastapi');p=int(os.environ.get('API_PORT',8090));s=socket.socket();s.settimeout(5);r=s.connect_ex(('127.0.0.1',p));s.close();exit(r)"]
+      interval: 30s
+      timeout: 10s
+      start_period: 180s
+      retries: 5
