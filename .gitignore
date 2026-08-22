@@ -48,3 +48,6 @@ config/
 # Docker
 .docker/
 docker-compose.override.yaml
+
+# Local test scaffolding
+.test/

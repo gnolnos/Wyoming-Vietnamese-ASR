@@ -52,6 +52,7 @@ ENV MODEL_DIR="/app/model" \
     HF_MODEL_ID="hynt/Zipformer-30M-RNNT-6000h" \
     HF_TOKEN="" \
     FORCE_DOWNLOAD="false" \
+    CHECK_UPDATE="true" \
     MODE="wyoming"
 
 EXPOSE 10400 8090

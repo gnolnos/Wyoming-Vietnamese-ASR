@@ -15,6 +15,7 @@ services:
       HF_MODEL_ID: "hynt/Zipformer-30M-RNNT-6000h"
       HF_TOKEN: ""
       FORCE_DOWNLOAD: "false"
+      CHECK_UPDATE: "true"     # tự check & tải model mới
       USE_INT8: "false"
       TOKENS_FILE: "config.json"
       NUM_THREADS: "4"
@@ -39,6 +40,7 @@ services:
       HF_MODEL_ID: "hynt/Zipformer-30M-RNNT-6000h"
       HF_TOKEN: ""
       FORCE_DOWNLOAD: "false"
+      CHECK_UPDATE: "true"     # tự check & tải model mới
       USE_INT8: "false"
       TOKENS_FILE: "config.json"
       NUM_THREADS: "4"
