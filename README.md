@@ -69,19 +69,30 @@
 
 Dùng image GHCR public (không cần build), tương đương Docker Hub `gnolnos/wyoming-vietnamese-asr:v1.3.0`.
 
+Có **3 template compose** để chọn theo nhu cầu:
+
+| File | Service | Dành cho |
+|---|---|---|
+| `compose.yaml` | Wyoming :10400 **+** FastAPI :8090 | Cần cả 2 (HA + API) — **mặc định** |
+| `compose.wyoming.yaml` | chỉ Wyoming :10400 | Chỉ dùng HA Voice/Assist |
+| `compose.fastapi.yaml` | chỉ FastAPI :8090 | Chỉ gọi HTTP `/transcribe` cho script |
+
 ```bash
-# 1. Dùng compose.yaml chuẩn (wyoming :10400 + fastapi :8090)
+# 1. Chọn 1 file, ví dụ bản đủ cả 2:
 docker compose up -d
 
 # 2. Kiểm tra
 curl http://localhost:8090/health        # → {"status":"ok"}
 docker inspect wyoming-asr --format '{{.State.Health.Status}}'   # → healthy
 docker logs wyoming-asr                  # xem: auto-download model, check revision
+
+# 3. (nếu dùng file riêng) 
+docker compose -f compose.wyoming.yaml up -d
 ```
 
 - **Model tự tải lần đầu** vào `./model` (bind mount, dễ backup như folder bình thường trên Unraid).
 - **Network:** dùng bridge + publish port (không `network_mode: host`) — chạy được mọi nơi. HA nối tới `wyoming-asr:10400`.
-- **Edit nhanh:** chỉ cần 1 trong 2 service trong `compose.yaml` nếu không cần cả 2.
+- **`user: root`** được giữ để ghi vào bind mount `./model` trên host; muốn tối ưu bảo mật thì đổi sang named volume + bỏ `user: root` (see [README-EN](README-EN.md)).
 
 ---
 
