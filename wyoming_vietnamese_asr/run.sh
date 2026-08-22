@@ -7,6 +7,7 @@ CONFIG_PATH=/data/options.json
 LOG_LEVEL=$(jq --raw-output '.log_level // "info"' "$CONFIG_PATH")
 EXTERNAL_MODEL_PATH=$(jq --raw-output '.external_model_path // "/data/model"' "$CONFIG_PATH")
 USE_INT8=$(jq --raw-output '.use_int8 // "false"' "$CONFIG_PATH")
+CHECK_UPDATE=$(jq --raw-output '.check_update // "true"' "$CONFIG_PATH")
 
 # Set log level
 export RUST_LOG="${LOG_LEVEL}"
@@ -18,6 +19,9 @@ export MODEL_PATH="${EXTERNAL_MODEL_PATH}"
 # Optional INT8 variant (smaller, faster on CPU, slight accuracy trade-off)
 export USE_INT8="${USE_INT8}"
 
+# Optional: auto-check & update model to newest revision each startup
+export CHECK_UPDATE="${CHECK_UPDATE}"
+
 echo "====================================="
 echo "🧠 Wyoming Vietnamese ASR Add-on"
 echo "====================================="
@@ -25,6 +29,7 @@ echo "Model: hynt/Zipformer-30M-RNNT-6000h"
 echo "Log level: ${LOG_LEVEL}"
 echo "Model path: ${MODEL_PATH}"
 echo "USE_INT8: ${USE_INT8}"
+echo "CHECK_UPDATE: ${CHECK_UPDATE}"
 echo "====================================="
 
 # Install system dependencies (Debian/glibc) - idempotent
