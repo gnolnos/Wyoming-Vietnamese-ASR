@@ -38,7 +38,7 @@
 | **Model** | Zipformer-30M-RNNT-6000h |
 | **Ngôn ngữ** | Tiếng Việt |
 | **WER** | 7.97% (VLSP2025) |
-| **Cổng** | 10400 (Wyoming), 8090 (FastAPI) |
+| **Cổng** | 10301 (Wyoming), 8090 (FastAPI) |
 | **Architecture** | amd64, aarch64 |
 
 ---
@@ -48,7 +48,7 @@
 1. Mở **Settings** → **Devices & Services**
 2. Click **+ Add Integration**
 3. Tìm **"Wyoming"**
-4. Enter host: `localhost` và port: `10400`
+4. Enter host: `localhost` và port: `10301`
 5. Click **Submit**
 
 ---
@@ -73,8 +73,8 @@ Có **3 template compose** để chọn theo nhu cầu:
 
 | File | Service | Dành cho |
 |---|---|---|
-| `compose.yaml` | Wyoming :10400 **+** FastAPI :8090 | Cần cả 2 (HA + API) — **mặc định** |
-| `compose.wyoming.yaml` | chỉ Wyoming :10400 | Chỉ dùng HA Voice/Assist |
+| `compose.yaml` | Wyoming :10301 **+** FastAPI :8090 | Cần cả 2 (HA + API) — **mặc định** |
+| `compose.wyoming.yaml` | chỉ Wyoming :10301 | Chỉ dùng HA Voice/Assist |
 | `compose.fastapi.yaml` | chỉ FastAPI :8090 | Chỉ gọi HTTP `/transcribe` cho script |
 
 ```bash
@@ -91,7 +91,7 @@ docker compose -f compose.wyoming.yaml up -d
 ```
 
 - **Model tự tải lần đầu** vào `./model` (bind mount, dễ backup như folder bình thường trên Unraid).
-- **Network:** dùng bridge + publish port (không `network_mode: host`) — chạy được mọi nơi. HA nối tới `wyoming-asr:10400`.
+- **Network:** dùng bridge + publish port (không `network_mode: host`) — chạy được mọi nơi. HA nối tới `wyoming-asr:10301`.
 - **`user: root`** được giữ để ghi vào bind mount `./model` trên host; muốn tối ưu bảo mật thì đổi sang named volume + bỏ `user: root` (see [README-EN](README-EN.md)).
 
 ---

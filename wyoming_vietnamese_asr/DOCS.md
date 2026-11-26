@@ -13,4 +13,4 @@
 
 ## Integration
 After starting the add-on, go to **Settings -> Devices & Services -> Add Integration** and search for **Wyoming Protocol**. 
-Use `localhost` or the provided IP with port `10400` to connect the ASR engine to Home Assistant.
+Use `localhost` or the provided IP with port `10301` to connect the ASR engine to Home Assistant.

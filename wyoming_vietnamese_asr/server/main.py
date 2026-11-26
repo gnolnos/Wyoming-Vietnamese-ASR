@@ -243,8 +243,8 @@ async def main():
     ensure_model()
     load_model()
 
-    server = AsyncServer.from_uri("tcp://0.0.0.0:10400")
-    _LOGGER.info("Wyoming server listening on 0.0.0.0:10400")
+    server = AsyncServer.from_uri("tcp://0.0.0.0:10301")
+    _LOGGER.info("Wyoming server listening on 0.0.0.0:10301")
 
     await server.run(VietnameseASREventHandler.factory)
 

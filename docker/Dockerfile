@@ -45,7 +45,7 @@ ENV MODEL_DIR="/app/model" \
     PROVIDER="cpu" \
     SAMPLE_RATE="16000" \
     SERVER_HOST="0.0.0.0" \
-    SERVER_PORT="10400" \
+    SERVER_PORT="10301" \
     API_HOST="0.0.0.0" \
     API_PORT="8090" \
     LOG_LEVEL="INFO" \
@@ -55,12 +55,12 @@ ENV MODEL_DIR="/app/model" \
     CHECK_UPDATE="true" \
     MODE="wyoming"
 
-EXPOSE 10400 8090
+EXPOSE 10301 8090
 
 # ── Health check động theo MODE ──────────────────────────────
 # PHẢI là 1 dòng DUY NHẤT: multi-line có thụt lề bị Docker nối kèm khoảng
 # trắng đầu dòng vào python -c -> IndentationError -> healthcheck luôn fail.
-HEALTHCHECK --interval=30s --timeout=10s --start-period=180s --retries=5 CMD python -c "import os,socket;m=os.environ.get('MODE','wyoming');p=int(os.environ.get('SERVER_PORT',10400)) if m=='wyoming' else int(os.environ.get('API_PORT',8090));s=socket.socket();s.settimeout(5);r=s.connect_ex(('127.0.0.1',p));s.close();exit(r)"
+HEALTHCHECK --interval=30s --timeout=10s --start-period=180s --retries=5 CMD python -c "import os,socket;m=os.environ.get('MODE','wyoming');p=int(os.environ.get('SERVER_PORT',10301)) if m=='wyoming' else int(os.environ.get('API_PORT',8090));s=socket.socket();s.settimeout(5);r=s.connect_ex(('127.0.0.1',p));s.close();exit(r)"
 
 # ── CMD theo MODE ─────────────────────────────────────────────
 # MODE=wyoming  → Wyoming server  [default]

@@ -73,7 +73,7 @@ git clone https://github.com/gnolnos/wyoming-vietnamese-asr.git
 cd wyoming-vietnamese-asr
 
 # Chọn 1 trong 3 template compose và chạy:
-docker compose up -d                       # cả Wyoming :10400 + FastAPI :8090
+docker compose up -d                       # cả Wyoming :10301 + FastAPI :8090
 # docker compose -f compose.wyoming.yaml up -d   # chỉ Wyoming
 # docker compose -f compose.fastapi.yaml up -d   # chỉ FastAPI
 
@@ -94,7 +94,7 @@ docker logs wyoming-asr                    # xem auto-download model + check rev
 3. Tìm **"Wyoming Vietnamese ASR"**
 4. Điền thông tin:
    - **Host**: Địa chỉ IP server Wyoming (mặc định: `192.168.100.150`)
-   - **Port**: Cổng Wyoming server (mặc định: `10400`)
+   - **Port**: Cổng Wyoming server (mặc định: `10301`)
    - **Tên**: Tên tích hợp (tùy chọn)
 5. Click **Hoàn tất**
 
@@ -102,15 +102,15 @@ docker logs wyoming-asr                    # xem auto-download model + check rev
 
 Dùng một trong các file compose ở root repo (image GHCR public, tự tải model):
 
-- `compose.yaml` — Wyoming :10400 **+** FastAPI :8090 (mặc định, cần cả 2)
-- `compose.wyoming.yaml` — chỉ Wyoming :10400
+- `compose.yaml` — Wyoming :10301 **+** FastAPI :8090 (mặc định, cần cả 2)
+- `compose.wyoming.yaml` — chỉ Wyoming :10301
 - `compose.fastapi.yaml` — chỉ FastAPI :8090
 
 ```bash
 docker compose up -d                 # hoặc docker compose -f compose.<variant>.yaml up -d
 ```
 
-Network dùng **bridge + publish port** (không `network_mode: host`) nên chạy được trên mọi nền tảng (Docker Desktop/Mac/WSL). HA nối tới `wyoming-asr:10400`. Model tự tải vào `./model` (bind mount cần quyền ghi — `user: root` được giữ cho việc này).
+Network dùng **bridge + publish port** (không `network_mode: host`) nên chạy được trên mọi nền tảng (Docker Desktop/Mac/WSL). HA nối tới `wyoming-asr:10301`. Model tự tải vào `./model` (bind mount cần quyền ghi — `user: root` được giữ cho việc này).
 
 ## 🎤 Sử dụng
 
@@ -149,7 +149,7 @@ curl -X POST "http://localhost:8090/transcribe" \
                   ▼
 ┌─────────────────────────────────────────┐
 │  Wyoming Vietnamese ASR Server          │
-│  Cổng: 10400                            │
+│  Cổng: 10301                            │
 │  Model: Zipformer-30M-RNNT-6000h       │
 │  CPU: 4 threads                         │
 └─────────────────┬───────────────────────┘
@@ -182,7 +182,7 @@ docker compose logs -f
 ### Chỉ Wyoming — `compose.wyoming.yaml`
 
 ```bash
-docker compose -f compose.wyoming.yaml up -d   # port 10400 cho HA
+docker compose -f compose.wyoming.yaml up -d   # port 10301 cho HA
 ```
 
 ### Chỉ FastAPI — `compose.fastapi.yaml`
@@ -205,10 +205,10 @@ Tất cả dùng **bridge + publish port** (không `network_mode: host`), `user:
 docker ps | grep wyoming
 
 # Kiểm tra cổng
-netstat -tlnp | grep 10400
+netstat -tlnp | grep 10301
 
 # Test kết nối
-nc -zv 192.168.100.150 10400
+nc -zv 192.168.100.150 10301
 ```
 
 ### Chất lượng nhận dạng kém

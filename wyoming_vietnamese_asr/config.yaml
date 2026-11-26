@@ -14,7 +14,7 @@ map:
   - type: config
     path: /data
 ports:
-  10400/tcp: 10400
+  10301/tcp: 10301
   8090/tcp: 8090
 options:
   external_model_path: "/data/model"  # Optional: external model dir (host path inside container). Default: /data/model (persisted in addon config)

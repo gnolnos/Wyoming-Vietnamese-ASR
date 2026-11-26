@@ -53,7 +53,7 @@ NUM_THREADS  = _get_int("NUM_THREADS", 4)
 SAMPLE_RATE  = _get_int("SAMPLE_RATE", 16000)
 PROVIDER     = os.environ.get("PROVIDER", "cpu")
 SERVER_HOST  = os.environ.get("SERVER_HOST", "0.0.0.0")
-SERVER_PORT  = _get_int("SERVER_PORT", 10400)
+SERVER_PORT  = _get_int("SERVER_PORT", 10301)
 LOG_LEVEL    = os.environ.get("LOG_LEVEL", "INFO").upper()
 
 # HuggingFace download config

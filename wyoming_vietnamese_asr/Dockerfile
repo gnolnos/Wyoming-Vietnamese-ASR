@@ -16,6 +16,6 @@ RUN chmod a+x /run.sh
 # Create data directory for models
 RUN mkdir -p /data
 
-EXPOSE 10400 8090
+EXPOSE 10301 8090
 
 CMD ["/run.sh"]

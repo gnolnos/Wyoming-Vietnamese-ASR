@@ -42,6 +42,6 @@ if [ "${MODE}" = "fastapi" ]; then
     echo "🚀 Starting FastAPI server (port ${API_PORT:-8090})..."
     exec python3 fastapi_server.py
 else
-    echo "🚀 Starting Wyoming server (port ${SERVER_PORT:-10400})..."
+    echo "🚀 Starting Wyoming server (port ${SERVER_PORT:-10301})..."
     exec python3 server/main.py
 fi

@@ -14,4 +14,4 @@ Vietnamese Automatic Speech Recognition for Home Assistant.
 1. Install add-on
 2. Start add-on
 3. Go to Settings → Devices & Services
-4. Add Wyoming integration pointing to `localhost:10400`
+4. Add Wyoming integration pointing to `localhost:10301`

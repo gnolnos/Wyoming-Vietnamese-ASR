@@ -48,7 +48,7 @@ Vietnamese Automatic Speech Recognition (ASR) integration for Home Assistant usi
 3. Search for "Wyoming Vietnamese ASR"
 4. Configure:
    - **Host**: Wyoming server IP (default: `192.168.100.150`)
-   - **Port**: Wyoming server port (default: `10400`)
+   - **Port**: Wyoming server port (default: `10301`)
    - **Name**: Integration name (optional)
 
 ### Standalone Docker
@@ -99,7 +99,7 @@ curl -X POST "http://localhost:8090/transcribe" \
                ▼
 ┌─────────────────────────────────────┐
 │  Wyoming Vietnamese ASR Server      │
-│  Port: 10400                        │
+│  Port: 10301                        │
 │  Model: Zipformer-30M-RNNT-6000h   │
 └──────────────┬──────────────────────┘
                │ (optional)
@@ -119,7 +119,7 @@ services:
   wyoming:
     image: gnolnos/wyoming-vietnamese-asr:latest
     ports:
-      - "10400:10400"
+      - "10301:10301"
     volumes:
       - ./model:/app/model:ro
     restart: unless-stopped

@@ -66,7 +66,7 @@ docker compose up -d
 3. Tìm **"Wyoming Vietnamese ASR"**
 4. Điền thông tin:
    - **Host**: Địa chỉ IP server Wyoming (mặc định: `192.168.100.150`)
-   - **Port**: Cổng Wyoming server (mặc định: `10400`)
+   - **Port**: Cổng Wyoming server (mặc định: `10301`)
    - **Tên**: Tên tích hợp (tùy chọn)
 5. Click **Hoàn tất**
 
@@ -78,7 +78,7 @@ services:
     image: gnolnos/wyoming-vietnamese-asr:latest
     container_name: wyoming-vietnamese-asr
     ports:
-      - "10400:10400"  # Wyoming protocol
+      - "10301:10301"  # Wyoming protocol
       - "8090:8090"    # FastAPI (tùy chọn)
     environment:
       - TZ=Asia/Saigon
@@ -125,7 +125,7 @@ curl -X POST "http://localhost:8090/transcribe" \
                   ▼
 ┌─────────────────────────────────────────┐
 │  Wyoming Vietnamese ASR Server          │
-│  Cổng: 10400                            │
+│  Cổng: 10301                            │
 │  Model: Zipformer-30M-RNNT-6000h       │
 │  CPU: 4 threads                         │
 └─────────────────┬───────────────────────┘
@@ -146,7 +146,7 @@ services:
   wyoming:
     image: gnolnos/wyoming-vietnamese-asr:latest
     ports:
-      - "10400:10400"
+      - "10301:10301"
     volumes:
       - ./model:/app/model:ro
     environment:
@@ -197,10 +197,10 @@ docker compose logs -f
 docker ps | grep wyoming
 
 # Kiểm tra cổng
-netstat -tlnp | grep 10400
+netstat -tlnp | grep 10301
 
 # Test kết nối
-nc -zv 192.168.100.150 10400
+nc -zv 192.168.100.150 10301
 ```
 
 ### Chất lượng nhận dạng kém
